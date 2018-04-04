@@ -64,7 +64,7 @@ class BooleanModel(object):
         return {token : np.char.count([doc.text.lower() for doc in self.__documents], token) for token in self.__tokens}
 
     def __calc_weights(self, tokens):
-        tf_idf = {}
+        tf_idf   = {}
         num_docs = len(self.__documents)
         for idx, doc in enumerate(self.__documents):
             weights = []
