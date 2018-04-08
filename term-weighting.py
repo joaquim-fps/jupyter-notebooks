@@ -21,7 +21,6 @@ class PreProcessor(object):
     def __init__(self, delims=' ', stopwords=[]):
         self.__delims    = str.maketrans(delims, ' '*len(delims))
         self.__stopwords = stopwords
-        self.__current_str =
 
     @property
     def delims(self):
@@ -91,8 +90,8 @@ class BooleanModel(object):
         unique, counts = np.unique(np.hstack(docs_index), return_counts=True)
 
         result = dict(zip(unique, counts))
-        and_result = [self.__documents[idx].text for idx in result.keys() if result[idx] == len(q_tokens)]
-        or_result  = [self.__documents[idx].text for idx in result.keys() if result[idx] > 0]
+        and_result = [self.__documents[doc_idx].text for doc_idx in result.keys() if result[doc_idx] == len(q_tokens)]
+        or_result  = [self.__documents[doc_idx].text for doc_idx in result.keys() if result[doc_idx] > 0]
 
         return {'AND' : and_result, 'OR' : or_result}
 
