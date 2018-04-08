@@ -18,9 +18,10 @@ class Document(object):
         return self.__text
 
 class PreProcessor(object):
-    def __init__(self, delims, stopwords):
+    def __init__(self, delims=' ', stopwords=[]):
         self.__delims    = str.maketrans(delims, ' '*len(delims))
         self.__stopwords = stopwords
+        self.__current_str =
 
     @property
     def delims(self):
@@ -37,9 +38,9 @@ class PreProcessor(object):
         return [string.lower() for string in text if string.lower() not in self.__stopwords]
 
 class BooleanModel(object):
-    def __init__(self, documents, preprocessor):
-        self.__documents     = documents
+    def __init__(self, preprocessor, documents):
         self.__preprocessor  = preprocessor
+        self.__documents     = documents
         self.__tokens        = np.unique(np.hstack([preprocessor.normalize(preprocessor.tokenize(doc.text)) for doc in documents]))
         self.__inverted_file = self.__create_index()
         self.__tf_idf        = self.__calc_weights(self.__tokens)
@@ -72,7 +73,7 @@ class BooleanModel(object):
                 term_freq = self.__inverted_file[token]
                 inv_freq  = len(term_freq.nonzero()[0])
                 if term_freq[idx] > 0:
-                    weights.append((1 + math.log(term_freq[idx], 2)) * math.log(num_docs/inv_freq))
+                    weights.append((1 + math.log(term_freq[idx], 2)) * math.log(num_docs/inv_freq, 2))
                 else:
                     weights.append(0)
             tf_idf.update({doc.id:weights})
@@ -96,16 +97,16 @@ class BooleanModel(object):
         return {'AND' : and_result, 'OR' : or_result}
 
 if __name__ == '__main__':
-    docs = [Document(1, 'O peã e o caval são pec de xadrez. O caval é o melhor do jog.'),
-            Document(2, 'A jog envolv a torr, o peã e o rei.'),
-            Document(3, 'O peã lac o boi'),
-            Document(4, 'Caval de rodei!'),
-            Document(5, 'Polic o jog no xadrez.')]
-
     delims    = ',.!?'
     stopwords = ['a', 'o', 'e', 'é', 'de', 'do', 'no', 'são']
-    pp        = PreProcessor(delims, stopwords)
+    pp        = PreProcessor(delims=delims, stopwords=stopwords)
+
+    docs = [Document(id=1, text='O peã e o caval são pec de xadrez. O caval é o melhor do jog.'),
+            Document(id=2, text='A jog envolv a torr, o peã e o rei.'),
+            Document(id=3, text='O peã lac o boi'),
+            Document(id=4, text='Caval de rodei!'),
+            Document(id=5, text='Polic o jog no xadrez.')]
 
     q  = 'xadrez peã caval torr'
-    bm = BooleanModel(docs, pp)
+    bm = BooleanModel(preprocessor=pp, documents=docs)
     print(bm.query(q))
