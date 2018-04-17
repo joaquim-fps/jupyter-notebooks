@@ -20,7 +20,11 @@ class VectorModel(object):
         self.__documents     = documents
         self.__tokens        = np.unique(np.hstack([preprocessor.normalize(preprocessor.tokenize(doc)) for doc in documents]))
         self.__inverted_file = self.__create_index()
-        self.__tf_idf        = self.__calc_doc_weights(self.__tokens, lambda x: 0 if x == 0 else 1+np.log2(x), lambda x: np.log2(x))
+        self.__tf_idf        = self.__calc_doc_weights(
+                                    self.__tokens, 
+                                    lambda x: 0 if x == 0 else 1+np.log2(x), 
+                                    lambda x: np.log2(x)
+                               )
     
     def __create_index(self):
         return {token : np.char.count([doc.lower() for doc in self.__documents], token) for token in self.__tokens}
@@ -28,7 +32,11 @@ class VectorModel(object):
     def __calc_doc_weights(self, tokens, calc_tf, calc_idf):
         return {
             idx: [
-                calc_tf(self.__inverted_file.get(token,[])[idx]) * calc_idf(len(self.__documents) / len(self.__inverted_file.get(token,[]).nonzero()[0])) 
+                calc_tf(self.__inverted_file.get(token,[])[idx]) 
+                * calc_idf(
+                    len(self.__documents) 
+                    / len(self.__inverted_file.get(token,[]).nonzero()[0])
+                ) 
                 for token in tokens
             ]
             for idx, doc in enumerate(self.__documents)
@@ -45,7 +53,12 @@ class VectorModel(object):
 
     def query(self, q):
         q_tokens = self.__preprocessor.normalize(self.__preprocessor.tokenize(q))
-        tf_idf_q = self.__calc_query_weights(q, q_tokens, lambda x, y: 0 if y.count(x) == 0 else 1+np.log2(y.count(x)), lambda x, y: 0 if y == 0 else np.log2(x/y))
+        tf_idf_q = self.__calc_query_weights(
+            q, 
+            q_tokens, 
+            lambda x, y: 0 if y.count(x) == 0 else 1+np.log2(y.count(x)), 
+            lambda x, y: 0 if y == 0 else np.log2(x/y)
+        )
 
         rank = [
             (
