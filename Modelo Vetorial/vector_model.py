@@ -30,25 +30,25 @@ class VectorModel(object):
         return {token : np.char.count([doc.lower() for doc in self.__documents], token) for token in self.__tokens}
 
     def __calc_doc_weights(self, tokens, calc_tf, calc_idf):
+        def inverted_file_iterable():
+            for token in self.__tokens:
+                yield self.__inverted_file.get(token,[])
+
         return {
-            idx: [
-                calc_tf(self.__inverted_file.get(token,[])[idx]) 
-                * calc_idf(
-                    len(self.__documents) 
-                    / len(self.__inverted_file.get(token,[]).nonzero()[0])
-                ) 
-                for token in tokens
+            doc_idx: [
+                calc_tf(token_freqs[doc_idx]) * calc_idf(len(self.__documents)/len(token_freqs.nonzero()[0])) 
+                for token_freqs in inverted_file_iterable()
             ]
-            for idx, doc in enumerate(self.__documents)
+            for doc_idx, doc in enumerate(self.__documents)
         }
 
     def __calc_query_weights(self, query, q_tokens, calc_tf, calc_idf):
         return {
-            idx: [
+            doc_idx: [
                 calc_tf(token, query) * calc_idf(len(self.__documents), len(self.__inverted_file.get(token,[]).nonzero()[0])) 
                 for token in self.__tokens
             ]
-            for idx, doc in enumerate(self.__documents)
+            for doc_idx, doc in enumerate(self.__documents)
         }
 
     def query(self, q):
@@ -60,19 +60,19 @@ class VectorModel(object):
             lambda x, y: 0 if y == 0 else np.log2(x/y)
         )
 
-        rank = [
-            (
-                doc_idx, 
-                (
-                    np.sum([self.__tf_idf[doc_idx][token_idx] * tf_idf_q[doc_idx][token_idx] for token_idx in range(len(self.__tokens))]) 
-                    / (
-                        np.sqrt(np.sum([self.__tf_idf[doc_idx][token_idx]**2 for token_idx in range(len(self.__tokens))])) 
-                        * np.sqrt(np.sum([tf_idf_q[doc_idx][token_idx]**2 for token_idx in range(len(self.__tokens))]))
-                    )
-                )
-            )
-            for doc_idx in range(len(self.__documents))
-        ]
+        def weights_iterable(doc_idx):
+            for token_idx, _ in enumerate(self.__tokens):
+                yield (self.__tf_idf[doc_idx][token_idx], tf_idf_q[doc_idx][token_idx])
+
+        def docs_iterable():
+            for doc_idx, _ in enumerate(self.__documents):
+                product = np.sum([doc_weight * query_weight for doc_weight, query_weight in weights_iterable(doc_idx)])
+                doc_norm = np.sqrt(np.sum([doc_weight**2 for doc_weight, _ in weights_iterable(doc_idx)]))
+                query_norm = np.sqrt(np.sum([query_weight**2 for _, query_weight in weights_iterable(doc_idx)]))
+
+                yield(doc_idx, product, doc_norm, query_norm)
+
+        rank = [(doc_idx, product/(doc_norm * query_norm)) for doc_idx, product, doc_norm, query_norm in docs_iterable()]
 
         rank.sort(reverse=True, key=lambda x: x[1])
         return rank
