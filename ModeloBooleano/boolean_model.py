@@ -4,29 +4,30 @@ import string
 import numpy as np
 
 class BooleanModel(object):
-	#Separa a entrada em tokens, utilizando como delimitadores ',', '.', '!', '?' e ' '
 	def tokenize(self, text):
+		"""Separa `text` numa lista de tokens, utilizando como delimitadores ',', '.', '!', '?' e ' '."""
 		return [tokens.strip().replace(',', ' ').replace('.', ' ').replace('!', ' ').replace('?', ' ').split() for tokens in text]
 
-	#Realiza a remoção das stopwords informadas e entradas duplicadas e normaliza a entrada para caixa-baixa
 	def normalize(self, tokens, stopwords):
+		"""Remove `stopwords` da lista `tokens`."""
 		norm = []
 		for phrase in tokens:
 			norm.append([token.lower() for token in phrase if token.lower() not in stopwords])
 
 		return np.unique(np.hstack(np.array(norm)))
 
-	#Calcula a frequência de cada token nos documentos e retorna um dicionario com essas informações
 	def create_index(self, tokens, docs):
+		"""Cria matriz de incidência, a partir dos `docs` e `tokens` informados."""
+
 		freq_matrix = {}
 		for token in tokens:
 			freq_matrix.update({token : np.char.count([doc.lower() for doc in docs], token)})
 
 		return freq_matrix
 				
-	#Realiza duas consultas, baseadas nas palavras-chaves informadas
-	#Sendo uma puramente conjuntiva e a outra disjuntiva
 	def query(self, q, matrix, stopwords, tokens, docs):
+		"""Realiza consulta `q`, utilizando o modelo booleano para retornar os `docs` relevantes."""
+
 		q = self.normalize(self.tokenize(q), stopwords)
 		or_result = set()
 		and_result = set()
@@ -50,8 +51,8 @@ class BooleanModel(object):
 
 		return (and_result, or_result)
 
-	#Faz a intersecção de dois índices de documentos (operação AND)
 	def __intersect(self, q1, q2):
+		"""Faz a intersecção de dois índices de documentos, `q1` e `q2` (operação AND)"""
 		answer = []
 		i = 0
 		j = 0
