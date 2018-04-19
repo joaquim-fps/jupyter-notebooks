@@ -72,7 +72,10 @@ class VectorModel(object):
 
                 yield(doc_idx, product, doc_norm, query_norm)
 
-        rank = [(doc_idx, product/(doc_norm * query_norm)) for doc_idx, product, doc_norm, query_norm in docs_iterable()]
+        rank = [
+                (doc_idx, product/(doc_norm * query_norm) if doc_norm * query_norm != 0 else 0) 
+                for doc_idx, product, doc_norm, query_norm in docs_iterable()
+        ]
 
         rank.sort(reverse=True, key=lambda x: x[1])
         return rank

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import string
@@ -34,14 +33,14 @@ class BooleanModel(object):
 
 		doc_index = {}
 		for option in q:
-			doc_index.update({option : matrix[option].nonzero()})
+			doc_index.update({option : matrix.get(option, np.array([0*len(docs)])).nonzero()})
 			
 			#operação OR
 			for index in doc_index[option]:
 				for i in range(len(index)):
 					or_result.add(docs[index[i]])
 
-		and_index = doc_index[q[0]][0]
+		and_index = doc_index[q[0]][0] if len(q) > 0 else ''
 		for i in range(len(q)-1):
 			and_index = self.__intersect(and_index, doc_index[q[i+1]][0])
 
