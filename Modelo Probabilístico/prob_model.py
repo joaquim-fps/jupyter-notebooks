@@ -1,6 +1,7 @@
 import string
 import numpy as np
 
+
 class PreProcessor(object):
     def __init__(self, delimiters=' ', stopwords=[]):
         self.__delims    = str.maketrans(delimiters, ' '*len(delimiters))
@@ -11,6 +12,7 @@ class PreProcessor(object):
 
     def normalize(self, text):
         return [string.lower() for string in text if string.lower() not in self.__stopwords]
+
 
 class ProbabilisticModel(object):
     def __init__(self, preprocessor, documents):
@@ -77,6 +79,7 @@ class ProbabilisticModel(object):
 
         rank.sort(reverse=True, key=lambda x: x[1])
         return rank
+
 
 def main():
     documents = [
