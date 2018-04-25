@@ -24,33 +24,6 @@ class ProbabilisticModel(object):
     def __create_index(self):
         return {token: np.char.count(self.__documents, token) for token in self.__tokens}
 
-    def bim(self, query, total_reps=1):
-        q_tokens = self.__preprocessor.normalize(self.__preprocessor.tokenize(query))
-
-        def estimate(rep, docs, terms):
-            N = len(self.__documents)
-            D = len(docs)
-
-            if rep == total_reps:
-                p = {token: 0.5 for token in terms}
-                q = {token: (len(self.__inverted_file[token].nonzero()[0])+0.5)/(N+1) for token in terms}
-            else:
-                Di = lambda token: len(np.array([doc.count(token) for doc in docs]).nonzero()[0])
-                ni = lambda token: len(self.__inverted_file[token].nonzero()[0])
-
-                p = {token: (Di(token)+(ni(token)/N))/(D+1) for token in terms}
-                q = {token: (ni(token)-Di(token)+(ni(token)/N))/(N-D+1) for token in terms}
-
-            rank = [
-                (doc, np.sum([np.log2(p[token]/(1-p[token])) + np.log2((1-q[token])/q[token]) for token in terms if token in doc])) 
-                for doc in docs
-            ]
-
-            rank.sort(reverse=True, key=lambda x: x[1])
-            return estimate(rep-1, [doc for doc, ranking in rank if ranking > 0], terms) if rep-1 > 0 else rank
-
-        return estimate(total_reps, self.__documents, [token for token in self.__tokens if token in q_tokens])
-
     def bm25(self, query, K=1, b=0.75):
         q_tokens = self.__preprocessor.normalize(self.__preprocessor.tokenize(query))
         
@@ -96,8 +69,7 @@ def main():
 
     q = 'xadrez peã caval torr'
     pm = ProbabilisticModel(preprocessor=pp, documents=documents)
-    print("BIM:", pm.bim(q))
-    print("BM25:", pm.bm25(q))
+    print(pm.bm25(q))
 
 if __name__ == '__main__':
     main()
